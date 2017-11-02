@@ -39,9 +39,10 @@ deployTask.getHandler = function (grunt) {
             aliases: null,
             enablePackageVersionAlias: false,
             subnetIds: null,
-            securityGroupIds: null
+            securityGroupIds: null,
+            environmentVariables: null
         });
-	
+
         if (options.profile !== null) {
             var credentials = new AWS.SharedIniFileCredentials({profile: options.profile});
             AWS.config.credentials = credentials;
@@ -156,13 +157,19 @@ deployTask.getHandler = function (grunt) {
                };
             }
 
+            if (options.environmentVariables !== null) {
+              configParams.Environment = {
+                Variables: options.environmentVariables
+              }
+            }
+
             var updateConfig = function (func_name, func_options) {
                 var deferred = Q.defer();
                 if (Object.keys(func_options).length > 0) {
                     func_options.FunctionName = func_name;
                     lambda.updateFunctionConfiguration(func_options, function (err, data) {
                         if (err) {
-                            grunt.fail.warn('Could not update config, check that values and permissions are valid');
+                            grunt.fail.warn(`Could not update config, check that values and permissions are valid\n${JSON.stringify(func_options, null, 2)}`);
                             deferred.reject();
                         } else {
                             grunt.log.writeln('Config updated.');
